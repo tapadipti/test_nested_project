@@ -1,19 +1,50 @@
 stages:
   prepare:
+    cmd: python src/prepare.py data/data.xml
+    deps:
+    - data/data.xml
+    - src/prepare.py
     params:
-      split: 0.20
-      seed: 20170428
-
+    - prepare.seed
+    - prepare.split
+    outs:
+    - data/prepared
   featurize:
+    cmd: python src/featurization.py data/prepared data/features
+    deps:
+    - data/prepared
+    - src/featurization.py
     params:
-      max_features: 3000
-      ngrams: 2
-
+    - featurize.max_features
+    - featurize.ngrams
+    outs:
+    - data/features
   train:
+    cmd: python src/train.py data/features model.pkl
+    deps:
+    - data/features
+    - src/train.py
     params:
-      seed: 20170428
-      n_est: 100
-      min_split: 64
-      a: 1
-      a1: 1
-      a2: 1
+    - train.min_split
+    - train.n_est
+    - train.seed
+    outs:
+    - model.pkl
+  evaluate:
+    cmd: python src/evaluate.py model.pkl data/features scores.json prc.json roc.json
+    deps:
+    - data/features
+    - model.pkl
+    - src/evaluate.py
+    metrics:
+    - scores.json:
+        cache: false
+    plots:
+    - prc.json:
+        cache: false
+        x: recall
+        y: precision
+    - roc.json:
+        cache: false
+        x: fpr
+        y: tpr
